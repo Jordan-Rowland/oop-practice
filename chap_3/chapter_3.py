@@ -1,3 +1,4 @@
+
 # Extending bult-ins
 
 class ContactList(list):
@@ -86,6 +87,13 @@ class AddressHolder:
         self.code = code
 
 
+# c1 = Contact('Jim', 'Gmail')
+# s1 = Supplier('Dave', 'Hotmail')
+# name_search = Contact.all_contacts.search('ji')
+
+# [c.name for c in name_search]
+
+
 class Friend(Contact, AddressHolder): #pylint: disable=E0102
     """Redefining Friend class to add AddressHolder
     mixin. This is NOT the approach you want to take
@@ -104,12 +112,61 @@ class Friend(Contact, AddressHolder): #pylint: disable=E0102
     Diamond Problem'"""
 
 
+# Polymorphism
+
+class AudioFile:
+    """Base class for audio files, with subclasses
+    for each file type that requires different
+    methods of extraction"""
+    def __init__(self, filename):
+        if not filename.endswith(self.ext):
+            raise Exception('Invalid File Format')
+
+        self.filename = filename
 
 
+class MP3File(AudioFile):
+    ext = 'mp3'
+
+    def play(self):
+        print(f'Decompressing and playing {self.filename} as mp3')
 
 
-c1 = Contact('Jim', 'Gmail')
-s1 = Supplier('Dave', 'Hotmail')
-name_search = Contact.all_contacts.search('ji')
+class WavFile(AudioFile):
+    ext = 'wav'
 
-[c.name for c in name_search]
+    def play(self):
+        print(f'Decompressing and playing {self.filename} as wav')
+
+
+class OggFile(AudioFile):
+    ext = 'ogg'
+
+    def play(self):
+        print(f'Decompressing and playing {self.filename} as ogg')
+
+"""The __init__ method in the parent class is able
+to access the 'ext' class variable from different
+subclasses. This is polymorphism."""
+
+"""Each subclass implements 'play()' in a different
+way. This is also polymorphism. The media player can
+use the exact same code to play a file, no matter what
+the type is; it doesn't care what subclass it is looking
+at. The details of decompressing the audio file are
+'encapsulated'."""
+
+"""Polymorphism is one of the most important reasons to
+use inheritance in many object-oriented contexts. Because
+any objects that supply the correct interface can be used
+interchangeably in Python, it reduces the need for polymorphic
+common superclasses. If all that isbeing shared is a public
+interface, duck-typing is all that is required. This reduced
+need for interitance also reduces the need for multiple
+inheritance; often, when multiple inheritance appears to be
+a valid solution, we can just use duck-typing to mimic one of
+the multiple superclasses."""
+
+"""Duck typed objects only need to provide methods and
+attributes that are being accessed, it does not need to
+provide the entire interface."""
