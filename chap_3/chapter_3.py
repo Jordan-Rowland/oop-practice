@@ -87,11 +87,10 @@ class AddressHolder:
         self.code = code
 
 
-# c1 = Contact('Jim', 'Gmail')
-# s1 = Supplier('Dave', 'Hotmail')
-# name_search = Contact.all_contacts.search('ji')
-
-# [c.name for c in name_search]
+c1 = Contact('Jim', 'Gmail')
+s1 = Supplier('Dave', 'Hotmail')
+name_search = Contact.all_contacts.search('ji')
+[c.name for c in name_search]
 
 
 class Friend(Contact, AddressHolder): #pylint: disable=E0102
@@ -170,3 +169,127 @@ the multiple superclasses."""
 """Duck typed objects only need to provide methods and
 attributes that are being accessed, it does not need to
 provide the entire interface."""
+
+# Abstract base classes
+
+"""In practice, it's rarely necessary to create new abstract
+base classes."""
+
+"""Most of the abstract base classes that exist in the Python
+standard library live in the 'collections' module. The Container
+class is implemented by List, Str and Dict classes to indicate
+whether or not a given value is in that data structure
+(3 in [1,2,3,4,5]). It can also be used to define a container
+that tells us whether a given value is in the set of odd
+integers."""
+
+class OddContainer:
+    def __contains__(self, x):
+        if not isinstance(x, int) or not x % 2:
+            return False
+        return True
+
+"""We can instantiate an OddContainer object and determine that,
+even though we did not extend Container, the class is a Container
+object."""
+
+
+"""One cool thing about the Container ABC is that any class that
+implements it gets to use the in keyword for free. In fact, in is
+just syntax sugar that delegates to the __contains__ method. Any
+class that has a __contains__ method is a Container and can
+therefore be queried by the in keyword, for example."""
+
+3 in OddContainer()
+4 in OddContainer()
+
+# Case study
+
+class IntroToPython:
+    def lesson(self):
+        return f"""
+            Hello{self.student}. Define two variables,
+            an integer named a value 1, and a
+            string named b with a value 'hello'
+
+        """
+
+    def check(self, code):
+        return code == "a = 1\nb = 'hello'"
+
+# Using abstract base class
+class Assignment(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def lesson(self, student):
+        pass
+
+    @abc.abstractmethod
+    def check(self, code):
+        pass
+
+    @classmethod
+    def __subclasshood__(cls, C):
+        if cls is Assignment:
+            attrs = set(dir(C))
+            if set(cls.__abstractmethods__) <= attrs:
+                return True
+
+        return NotImplemented
+
+# Using inheritance
+class Statistics(Assignment):
+    def lesson(self):
+        return f"""
+            Good work so far, {self.student}. Now,
+            calculate the average of the numbers
+            1, 5, 18, -3 and assign to a variable
+            named 'avg'
+        """
+
+    def check(self, code):
+        import Statistics
+
+        code = f"import statistics\n{code}"
+
+        local_vars = {}
+        global_vars = {}
+        exec(code, global_vars, local_vars)
+
+        return local_vars.get('avg') == statistics.mean([1 ,5 ,8, -3])
+
+
+class AssignmentGrader:
+    def __init__(self, student, AssignmentClass):
+        self.assignment = AssignmentClass()
+        self.assignment.student = student
+        self.attempts = 0
+        self.correct_attempts = 0
+
+    def check(self, code):
+        self.attempts += 1
+        result = self.assignment.check(code)
+        if result:
+            self.correct_attempts += 1
+
+        return result
+
+    def lesson(self):
+        return self.assignment.lesson()
+
+import uuid
+
+class Grader:
+    def __init__(self):
+        self.student_graders = {}
+        self.assignment_classes = {}
+
+    def register(self, assignment_class):
+        if not issubclass(assignment_class, Assignment):
+            raise RuntimeError(
+                "Your class does not have the right methods"
+            )
+
+        id = uuid.uuid4()
+        self.assignment_classes[id] = assignment_class
+        return id
+
