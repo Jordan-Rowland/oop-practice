@@ -293,3 +293,70 @@ class Grader:
         self.assignment_classes[id] = assignment_class
         return id
 
+    """
+    from grader import Grader
+    from lessons import IntroToPython, Statistics
+
+    grader = Grader()
+    itp_id = grader.register(IntroToPython)
+    """
+
+    def start_assignment(self, student, id):
+        self.student_graders[student] = AssignmentGrader(
+            student, self.assignment_class[id]
+        )
+
+    def get_lesson(self, student):
+        assignment = self.student_graders[student]
+        return assignment.lesson()
+
+    def check_assignment(self, student, code):
+        assignment = self.student_graders[student]
+        return assignment.check(code)
+
+    def assignment_summary(self, student):
+        grader = self.student_graders[student]
+        return f"""
+            {student}'s attempts at {grader.assignment.__class__.__name__}:
+
+            attempts: {grader.attempts}
+            correct: {grader.correct_attempts}
+            passed: {grader.correct_attempts > 0}
+        """
+
+# Code to show how it all fits together
+
+grader = Grader()
+itp_id = grader.register(IntroToPython)
+stat_id = grader.register(Statistics)
+
+grader.start_assignment('Tammy', itp_id)
+print("Tammy's Lesson:", grader.get_lesson('Tammy'))
+print(
+    "Tammy's Check:",
+    grader.check_assignment("Tammy", "a = 1\nb = 'hello'")
+)
+print(
+    "Tammy's other check:"
+    grader.check_assignment("Tammy", "a = 1\nb = 'hello'")
+)
+
+print(grader.assignment_summary("Tammy"))
+
+grader.start_assignment('Tammy', stat_id)
+print("Tammy's Lesson:", grader.get_lesson("Tammy"))
+print("Tammy's check:", grader.check_assignment("Tammy", "avg=5.25"))
+print(
+    "Tammy's other check:",
+    grader.check_assignment(
+    "Tammy", "avg = statistics.mean([1, 5, 18, -3])"
+    ),
+)
+print(grader.assignment_summary("Tammy"))
+
+
+# Exercises
+
+book, magazine
+
+computer, phone,
