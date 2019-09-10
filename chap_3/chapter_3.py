@@ -354,11 +354,3 @@ print(
 )
 print(grader.assignment_summary("Tammy"))
 
-
-# Exercises
-
-book, magazine
-
-computer, phone,
-
-
