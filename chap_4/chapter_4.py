@@ -11,10 +11,10 @@ def funny_division3(divider):
         print("No, No, not 13!")
     raise
 
-#try:
-#    raise ValueError('This is an argument')
-#except ValueError as e:
-#    print(f'the arguments were {e.args}')
+# try:
+#     raise ValueError('This is an argument')
+# except ValueError as e:
+#     print(f'the arguments were {e.args}')
 
 import random
 some_exceptions = [ValueError, TypeError, IndexError, None]
@@ -38,4 +38,4 @@ finally:
 class InvalidWithdrawal(Exception):
     pass
 
-raise InvalidWithdrawal('You\'re poor, bitch!!')
+# raise InvalidWithdrawal('Not enough money in your account to withdraw')
