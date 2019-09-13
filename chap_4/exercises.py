@@ -3,7 +3,7 @@ import auth
 
 # set up users
 # set up permissions for certain actions
-auth.authenticator.add_user('jordan' 'jpass')
+auth.authenticator.add_user('jordan', 'jpassword')
 auth.authorizor.add_permission('disconnect campaign')
 auth.authorizor.add_permission('reconnect campaign')
 auth.authorizor.permit_user('disconnect campaign', 'jordan')
@@ -25,7 +25,7 @@ class Editor:
         self.menu_map = {
             'login': self.login,
             'logout': self.logout,
-            'disconnect campaigns': self.disconnect,
+            'dc': self.disconnect_campaigns,
             'quit': self.quit,
         }
 
@@ -59,10 +59,11 @@ class Editor:
         self.username = False
 
     def disconnect_campaigns(self, campaign_ids):
-        if self.is_permitted('disconnect campaigns')
+        if self.is_permitted('disconnect campaign'):
             for campaign_id in campaign_ids:
                 try: 
-                    campaign_ids_global[campaign_id = 'disconnected'
+                    selected_campaign = campaign_ids_global[int(campaign_id)] 
+                    campaign_ids_global[campaign_id] = 'disconnected'
                 except KeyError:
                     print(f'{campaign_id} does not exist')
                 else:
@@ -74,9 +75,41 @@ class Editor:
     def menu(self):
         try:
             while True:
-            print("""
-            Please enter a command:
-            \tlogin\tLogin
-            \tquit\tQuit
-            """)
-            answer = input('Enter a command: ').lower()
+                print('=' * 25)
+                print("Please enter a command:\n" \
+                "\tlogin\tLogin\n" \
+                "\tquit\tQuit")
+                answer = input('Enter a command: ').lower()
+                try:
+                    func = self.menu_map[answer]
+                except KeyError:
+                    print(f'{answer} is not a valid option')
+                else:
+                    func()
+                if self.username:
+                    while True:
+                        print('=' * 25)
+                        print(f'Logged in as {self.username}')
+                        print("Please enter a command:\n" \
+                        "\tdc\tDisconnect campaigns\n" \
+                        "\tlogout\tLogout")
+                        answer = input('Enter a command: ')
+                        try:
+                            func = self.menu_map[answer]
+                        except KeyError:
+                            print(f'{answer} is not a valid option')
+                        else:
+                            if answer == 'logout':
+                                func()
+                                break
+                            elif 'dc' in answer:
+                                answer2 = input("enter the campaign you " \
+                                                "would like to disconnect: ")
+                                func(answer2.split(','))
+                            else:
+                                func()
+        finally:
+            print('Thanks, bye!!')
+
+
+Editor().menu()
