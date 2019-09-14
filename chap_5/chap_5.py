@@ -74,12 +74,18 @@ class Color:
         self._name = name
 
     @name.deleter
+    # deleter method has a decorator too
     def name(self):
-    """deleter method has a decorator too"""
         del self._name
 
 
 c = Color('321', 'purple')
 print(c.name)
 c.name = 'blue'
-print(c.name)
+
+"""
+As programs become more and more complex, the object being modeled become less and
+less like physical objects. But at the heart of every object, no matter how complex,
+is a set of concrete data and well-defined behaviours.
+"""
+
