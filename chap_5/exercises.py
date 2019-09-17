@@ -63,6 +63,14 @@ class ScaleZip():
 
 
 # Ex.3, add error handling to the case study example
+class DeleteError(Exception):
+    pass
+
+
+class SaveError(Exception):
+    pass
+
+
 class Document:
     def __init__(self):
         self.characters = []
@@ -80,11 +88,15 @@ class Document:
         self.cursor.forward()
 
     def delete(self):
+        if self.cursor.position >= len(self.characters):
+            raise DeleteError('Cannot delete a character that does not exist(EOL)')
         del self.characters[self.cursor.position]
 
     def save(self):
+        if not self.filename:
+            raise SaveError('Cannot save file without a name')
         with open(self.filename, 'w') as f:
-            f.write(''.join(self.characters))
+            f.write(''.join((str(c) for c in self.characters)))
 
 
 class Cursor:
@@ -93,19 +105,25 @@ class Cursor:
         self.position = 0
 
     def forward(self):
+        if self.position == len(self.document.characters):
+            return
         self.position += 1
 
     def back(self):
+        if self.position == 0:
+            return
         self.position -= 1
 
     def home(self):
         while self.document.characters[self.position - 1].character != '\n':
-            self.position -= 1
             if self.position == 0:
                 # Got to the begenning of the file before newline
                 break
+            self.position -= 1
 
     def end(self):
+        if self.position > len(self.document.characters) + 1:
+            return
         while (
                 self.position < len(self.document.characters)
                 and self.document.characters[self.position].character != '\n'
@@ -126,3 +144,20 @@ class Character:
         underline = '_' if self.underline else ''
         return f'{bold}{italic}{underline}{self.character}'
 
+d = Document()
+print(d.cursor.position)
+
+for i in 'hello\nworld':
+    d.insert(i)
+
+print(d.string) 
+d.cursor.position
+
+d.cursor.home()
+d.cursor.position
+d.cursor.back()
+d.cursor.position
+d.cursor.home()
+d.cursor.position
+d.cursor.back()
+d.cursor.position
