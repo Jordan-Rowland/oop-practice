@@ -56,6 +56,7 @@ a much more useful string representation, and a comparison operator.
 dataclasses have many other useful features, but another more common way to define
 a dataclass is below.
 """
+from dataclasses import dataclass
 
 @dataclass
 class StockDecorated:
@@ -83,7 +84,7 @@ class StockDefaults:
     low: 0
 
 """
-You can construct this calss with just the stock name; the rest of the values will
+You can construct this class with just the stock name; the rest of the values will
 take on the defaults. You can still specify values if you prefer.
 """
 
