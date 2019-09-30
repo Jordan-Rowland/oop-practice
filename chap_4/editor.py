@@ -66,7 +66,7 @@ class Editor:
                 """)
                 answer = input('Enter a command: ').lower()
                 try:
-                   func = self.menu_map[answer]
+                    func = self.menu_map[answer]
                 except KeyError:
                     print(f'{answer} is not a valid option')
                 else:

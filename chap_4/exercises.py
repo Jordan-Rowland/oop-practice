@@ -11,7 +11,7 @@ auth.authorizor.permit_user('disconnect campaign', 'jordan')
 campaign_ids_global = {
         1: 'disconnected',
         2: 'connected',
-        3: 'connected', 
+        3: 'connected',
         4: 'connected'
         }
 # write an editor to perform some CN related tasks
@@ -61,14 +61,14 @@ class Editor:
     def disconnect_campaigns(self, campaign_ids):
         if self.is_permitted('disconnect campaign'):
             for campaign_id in campaign_ids:
-                try: 
-                    selected_campaign = campaign_ids_global[int(campaign_id)] 
+                try:
+                    selected_campaign = campaign_ids_global[int(campaign_id)]
                     campaign_ids_global[campaign_id] = 'disconnected'
                 except KeyError:
                     print(f'{campaign_id} does not exist')
                 else:
                     print(f'{campaign_id} -> {campaign_ids_global[campaign_id]}')
-    
+
     def quit(self):
         raise SystemExit()
 
