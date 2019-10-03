@@ -1,3 +1,7 @@
+import re
+import datetime
+import sys
+
 subtotal = 12.32
 tax = subtotal * 0.07
 total = subtotal + tax
@@ -13,10 +17,8 @@ for product, price, quantity in orders:
         f"${price: <8.2f}${subtotal: <10.2f}"
 )
 
-import datetime
 print(f'{datetime.datetime.now():%Y-%m-%d %I:%M%p}')
 
-import re
 search_string = 'hello world'
 pattern = 'hello world'
 
@@ -24,3 +26,15 @@ match = re.match(pattern, search_string)
 
 if match:
     print('regex matches')
+
+pattern = sys.argv[1]
+search_string = sys.argv[2]
+match = re.match(pattern, search_string)
+
+if match:
+    template = "'{}' matches pattern '{}'"
+else:
+    template = "'{}' does not match pattern '{}'"
+
+print(template.format(search_string, pattern))
+
