@@ -29,31 +29,88 @@ class LogSocket:
 
 def respond(client):
     response = input('Enter a value: ')
-    client.send(bytes(response, 'utf8'))
+    # client.send(bytes(response, 'utf8'))
     client.close()
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind(('localhost', 2401))
-server.listen(1)
-try:
-    while True:
-        client, addr = server.accept()
-        respond(LogSocket(client))
-finally:
-    server.close()
 
 
 """
-When faced with achoice between decorators and inheritance, we should only use
+When faced with a choice between decorators and inheritance, we should only use
 decorators if we need to modify the object dynamically, according to some condition.
-
 For example, we may only want to enable the logging decorator if the server is
 currently in debugging mode. Decorators also beat multiple interitance when we have
 more than one optional behaviour. As an example, we can write a second decorator
 that compresses data using gzip compression whenever send is called:
 """
 
-"""
-Unrelated to this chapter, play around with 'super()' method. Does calling super
-overwrite the function completely?
-"""
+import gzip
+from io import BytesIO
+
+class GzipSocket:
+    def __init__(self, socket):
+        self.socket = socket
+
+    def send(self, data):
+        buf = BytesIO
+        zipfile = gzip.GzipFile(fileobj=buf, mode='w')
+        zipfile.write(data)
+        zipfile.close()
+        self.socket.send(buf.getvalue())
+
+    def close(self):
+        self.socket.close()
+
+
+log_send = True
+compress_hosts = []
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind(('localhost', 2401))
+server.listen(1)
+
+try:
+    while True:
+        client, addr = server.accept()
+        # This examply shows that we can dynamically switch between them when 
+        # responding. Noticethat none, either, or both of the decorators may be
+        # enabled, depending on the configuration and connecting client. Writing
+        # this with multiple inheritance would be very confusing.
+        if log_send:
+            client = LogSocket(client)
+        # if client.getpeername()[0] in compress_hosts:
+            client = GzipSocket(client)
+        respond(client)
+finally:
+    server.close()
+
+
+import time
+
+def log_calls(func):
+    def wrapper(*args, **kwargs):
+        now = time.time
+        print(f'Calling {func.__name__} with {args} and {kwargs}')
+        return_value = func(*args, **kwargs)
+        print(f'Executed {func.__name__} in {time.time() - now}ms')
+        return return_value
+
+    return wrapper
+
+def test1(a, b, c):
+    print('\ttest1 called')
+
+def test2(a, b):
+    print('\ttest2 called')
+
+def test3(a, b):
+    print('\ttest3 called')
+    time.sleep(1)
+
+test1 = log_calls(test1)
+test2 = log_calls(test2)
+test3 = log_calls(test3)
+
+test1(1, 2, 3)
+test2(4, b=5)
+test3(6, 7)
+
+
