@@ -50,7 +50,7 @@ print(first())
 print(second())
 
 
-from importing_decorator import my_decorator, do_twice
+from idecorators import my_decorator, do_twice
 
 def say_whee():
     print('Whee!')
@@ -218,4 +218,22 @@ def randomly_greet(name):
     print(f"Using {greeter!r}")
     return greeter_func(name)
 
+# Passing arguemnts to a decorator
+##################################
+# To change '@do_twice' into a '@repeat(num_times)' function, you must wrap your
+# decorater and inner wrapper function with another function that accepts arguments.
 
+def repeat(num_times):
+    def repeat(func):
+        @functools.wraps(func)
+        def wrapper_repeat(*args, **kwargs):
+            for i in range(num_times):
+                value = func(*args, **kwargs)
+            return value
+        return wrapper_repeat
+    return repeat
+
+
+@repeat(num_times=4)
+def say_hello(name):
+    print(f'Hello {name}')
