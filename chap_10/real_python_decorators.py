@@ -237,3 +237,68 @@ def repeat(num_times):
 @repeat(num_times=4)
 def say_hello(name):
     print(f'Hello {name}')
+
+
+# Stateful class-based decorators
+"""
+The init method must store a reference to the function and can do any other necessary
+initialization. The call method will be called instead of the decorated function.
+It does essentially the same thing as the wrapper() function in earlier examples.
+Note that you need to use the functools.update_wrapper() function insteald of
+functools.wraps().
+"""
+
+class CountCalls:
+    def __init__(self, func):
+        functools.update_wrapper(self, func)
+        self.func = func
+        self.num_calls = 0
+
+    def __call__(self, *arg, **kwargs):
+        self.num_calls += 1
+        print(f"Call {self.num_calls} of {self.func.__name__!r}")
+        return self.func(*arg, **kwargs)
+
+
+# function-based stateful decorator
+def count_calls(func):
+    @functools.wraps(func)
+    def wrapper_count_calls(*args, **kwargs):
+        wrapper_count_calls.num_calls += 1
+        print(f"Call {wrapper_count_calls.num_calls} of {func.__name__!r}")
+        return func(*args, **kwargs)
+    wrapper_count_calls.num_calls = 0
+    return wrapper_count_calls
+
+# @count_calls
+@CountCalls
+def say_whee():
+    print('whee!')
+
+
+from time import sleep
+
+
+# To set optional parameters, must include _func=None as first parameter.
+# Optional arguments are key-word only args. 
+def slow_down(_func=None, *, num_seconds=1):
+    """Sleep given amount of seconds before calling the function."""
+    def decorator_slow_down(func):
+        @functools.wraps(func)
+        def wrapper_sleep(*args, **kwargs):
+            sleep(num_seconds)
+            value = func(*args, **kwargs)
+            return value
+        return wrapper_sleep
+
+    if _func is None:
+        return decorator_slow_down
+    else:
+        return decorator_slow_down(_func)
+
+
+
+@slow_down(num_seconds=4)
+def say_whee():
+    print('whee!')
+
