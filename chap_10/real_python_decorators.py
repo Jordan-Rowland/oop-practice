@@ -302,3 +302,64 @@ def slow_down(_func=None, *, num_seconds=1):
 def say_whee():
     print('whee!')
 
+
+# Singletons
+"""
+A singleton is a class with only one instance. Singletons frequently used include
+True, False, and None. Using 'is' returns True only for objects that are the exact
+same instance. The following @singleton decorator turns a class into a singleton by
+storing the first instance of the class as an attribute. Later attempts at creating
+an instance return the stored instance.
+"""
+
+def singleton(cls):
+    """Make a class a Singleton class (onlyone instance)."""
+    @functools.wraps(cls)
+    def wrapper_singleton(*args, **kwargs):
+        if not wrapper_singleton.instance:
+            wrapper_singleton.instance = cls(*args, **kwargs)
+        return wrapper_singleton.instance
+    wrapper_singleton.instance = None
+    return wrapper_singleton
+
+@singleton
+class TheOne:
+    pass
+
+"""
+Singleton classes are not really used as often in Python as in other languages. The
+effect of a singleton is usually better implemented as a global variable in a method.
+"""
+
+# Caching return values (memoization?)
+
+@count_calls
+def fibonacci(num):
+    if num < 2:
+        return num
+    return fibonacci(num - 1) + fibonacci(num - 2)
+
+
+def cache(func):
+    """Keep a cache of previous function calls."""
+    @functools.wraps(func)
+    def wrapper_cache(*args, **kwargs):
+        cache_key = args + tuple(kwargs.items())
+        if cache_key not in wrapper_cache.cache:
+            wrapper_cache.cache[cache_key] = func(*args, **kwargs)
+        return wrapper_cache.cache[cache_key]
+    wrapper_cache.cache = dict()
+    return wrapper_cache
+
+
+@cache
+@count_calls
+def fibonacci(num):
+    if num < 2:
+        return num
+    return fibonacci(num - 1) + fibonacci(num - 2)
+
+# Last Recently Used(LRU) cache is also available in functools
+
+@functools.lru_cache(maxsize=4)
+
