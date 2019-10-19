@@ -50,7 +50,7 @@ print(first())
 print(second())
 
 
-from importing_decorator import my_decorator, do_twice
+from idecorators import my_decorator, do_twice
 
 def say_whee():
     print('Whee!')
@@ -218,4 +218,148 @@ def randomly_greet(name):
     print(f"Using {greeter!r}")
     return greeter_func(name)
 
+# Passing arguemnts to a decorator
+##################################
+# To change '@do_twice' into a '@repeat(num_times)' function, you must wrap your
+# decorater and inner wrapper function with another function that accepts arguments.
+
+def repeat(num_times):
+    def repeat(func):
+        @functools.wraps(func)
+        def wrapper_repeat(*args, **kwargs):
+            for i in range(num_times):
+                value = func(*args, **kwargs)
+            return value
+        return wrapper_repeat
+    return repeat
+
+
+@repeat(num_times=4)
+def say_hello(name):
+    print(f'Hello {name}')
+
+
+# Stateful class-based decorators
+"""
+The init method must store a reference to the function and can do any other necessary
+initialization. The call method will be called instead of the decorated function.
+It does essentially the same thing as the wrapper() function in earlier examples.
+Note that you need to use the functools.update_wrapper() function insteald of
+functools.wraps().
+"""
+
+class CountCalls:
+    def __init__(self, func):
+        functools.update_wrapper(self, func)
+        self.func = func
+        self.num_calls = 0
+
+    def __call__(self, *arg, **kwargs):
+        self.num_calls += 1
+        print(f"Call {self.num_calls} of {self.func.__name__!r}")
+        return self.func(*arg, **kwargs)
+
+
+# function-based stateful decorator
+def count_calls(func):
+    @functools.wraps(func)
+    def wrapper_count_calls(*args, **kwargs):
+        wrapper_count_calls.num_calls += 1
+        print(f"Call {wrapper_count_calls.num_calls} of {func.__name__!r}")
+        return func(*args, **kwargs)
+    wrapper_count_calls.num_calls = 0
+    return wrapper_count_calls
+
+# @count_calls
+@CountCalls
+def say_whee():
+    print('whee!')
+
+
+from time import sleep
+
+
+# To set optional parameters, must include _func=None as first parameter.
+# Optional arguments are key-word only args. 
+def slow_down(_func=None, *, num_seconds=1):
+    """Sleep given amount of seconds before calling the function."""
+    def decorator_slow_down(func):
+        @functools.wraps(func)
+        def wrapper_sleep(*args, **kwargs):
+            sleep(num_seconds)
+            value = func(*args, **kwargs)
+            return value
+        return wrapper_sleep
+
+    if _func is None:
+        return decorator_slow_down
+    else:
+        return decorator_slow_down(_func)
+
+
+
+@slow_down(num_seconds=4)
+def say_whee():
+    print('whee!')
+
+
+# Singletons
+"""
+A singleton is a class with only one instance. Singletons frequently used include
+True, False, and None. Using 'is' returns True only for objects that are the exact
+same instance. The following @singleton decorator turns a class into a singleton by
+storing the first instance of the class as an attribute. Later attempts at creating
+an instance return the stored instance.
+"""
+
+def singleton(cls):
+    """Make a class a Singleton class (onlyone instance)."""
+    @functools.wraps(cls)
+    def wrapper_singleton(*args, **kwargs):
+        if not wrapper_singleton.instance:
+            wrapper_singleton.instance = cls(*args, **kwargs)
+        return wrapper_singleton.instance
+    wrapper_singleton.instance = None
+    return wrapper_singleton
+
+@singleton
+class TheOne:
+    pass
+
+"""
+Singleton classes are not really used as often in Python as in other languages. The
+effect of a singleton is usually better implemented as a global variable in a method.
+"""
+
+# Caching return values (memoization?)
+
+@count_calls
+def fibonacci(num):
+    if num < 2:
+        return num
+    return fibonacci(num - 1) + fibonacci(num - 2)
+
+
+def cache(func):
+    """Keep a cache of previous function calls."""
+    @functools.wraps(func)
+    def wrapper_cache(*args, **kwargs):
+        cache_key = args + tuple(kwargs.items())
+        if cache_key not in wrapper_cache.cache:
+            wrapper_cache.cache[cache_key] = func(*args, **kwargs)
+        return wrapper_cache.cache[cache_key]
+    wrapper_cache.cache = dict()
+    return wrapper_cache
+
+
+@cache
+@count_calls
+def fibonacci(num):
+    if num < 2:
+        return num
+    return fibonacci(num - 1) + fibonacci(num - 2)
+
+# Last Recently Used(LRU) cache is also available in functools
+
+@functools.lru_cache(maxsize=4)
 
