@@ -1,1 +1,4 @@
-position,name,salary,hourly,hours_accrued
+eid,position,name,salary,hourly,hours_accrued
+8852637854347205120,Doctor,Jim Kelly,155000,False,None
+2228746197809778310,Receptionist,Janet De Vito,22,True,0
+5139539232292158318,Doctor,Richard Davies,134000,False,None

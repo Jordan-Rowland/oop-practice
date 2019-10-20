@@ -362,4 +362,32 @@ def fibonacci(num):
 # Last Recently Used(LRU) cache is also available in functools
 
 @functools.lru_cache(maxsize=4)
+def fibonacci(num):
+    print(f"Calculating fibonacci({num})")
+    if num < 2:
+        return num
+    return fibonacci(num - 1) + fibonacci(num - 2)
 
+from flask import Flask, request, abort
+
+def validate_json(*expected_args):
+    def decorator_validate_json(func):
+        @functools.wraps(func)
+        def wrapper_validate_json(*args, **kwargs):
+            json_object = request.get_json()
+            for expected_arg in expected_args:
+                if expected_arg not in json_object:
+                    abort(400)
+            return func(*args, **kwargs)
+        return wrapper_validate_json
+    return decorator_validate_json
+
+
+"""
+@app.route('/whatever', methods=["POST"])
+@validate_json('srudent_id')
+def update_grade():
+    json_data = request.get_json()
+    # update database
+    return "Success!"
+"""
