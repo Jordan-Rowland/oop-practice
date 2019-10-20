@@ -69,6 +69,8 @@ class Patient:
     def notes(self, note):
         self._patient_notes.append(f'[{str(datetime.now())[:-7]}] - {note}')
 
+    # TODO: Read and write patients to csv
+
 
 class PayRoll(list):
     """Extends List class, acts as a singleton and maintains employee roster."""
@@ -121,11 +123,11 @@ class PayRoll(list):
 
 class Calendar(dict):
     def __init__(self):
-        self['monday'] = {}
-        self['tuesday'] = {}
-        self['wednesday'] = {}
-        self['thursday'] = {}
-        self['friday'] = {}
+        self['monday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
+        self['tuesday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
+        self['wednesday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
+        self['thursday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
+        self['friday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
 
     def show_appt(self, day, time):
         appt = self.get(day.lower()).get(f"{time}pm")
@@ -135,31 +137,60 @@ class Calendar(dict):
             print('No appointment at this time.')
 
     def book_appt(self, day, time, doctor, patient):
+        if int(time) not in [12, 1, 2, 3, 4]:
+            print('This time is not available. Please select a time between 12pm and 4pm.')
+            return
         appt = self.get(day.lower()).get(f"{time}pm")
         appt_details = [doctor, patient]
         if not appt:
             self[day.lower()][f"{time}pm"] = [appt_details]
         else:
+            doctor_names = [details[0].name.lower() for details in appt]
+            if doctor.name.lower() in doctor_names:
+                print(f'Appointment slot with {doctor.name} at {time}pm on {day.title()} already booked.'
+                       '\nPlease choose another time, or delete the existing appointment.')
+                return
             appt.append(appt_details)
         print(f"Appointment confirmed at {time}pm on {day.title()} for {patient.name} with "
               f"{doctor.name}")
 
+    def remove_appt(self, day, time, doctor_name=None):
+        day = day.lower()
+        doctor_name = doctor_name.lower() if doctor_name else None
+        appts = self.get(day).get(f"{time}pm")
+        if not appts:
+            print('No appointments at this time to delete')
+            self.show_calendar()
+            return
+        if not doctor_name:
+            del appts[0]
+            self.show_calendar()
+            return
+        for appointment in appts:
+            if doctor_name in appointment[0].name.lower():
+                appts.remove(appointment)
+                self.show_calendar()
+                return
+        print(f"No appointments on {day.title()} at {time}pm with Dr. {doctor_name.title()}")
+
     def show_calendar(self):
         print()
-        booked = {k: v for k, v in self.items() if v}
-        for k, v in booked.items():
+        for k, v in self.items():
             print('=' * 50)
             print(k.title())
             for k, v in v.items():
-                print(f"\t{k}")
-                print(f"\t{'-' * 10}")
-                for appt in v:
-                    print(f"\t{appt[0]}, {appt[1]}")
-                print(f"\t{'-' * 42}")
+                if v:
+                    print(f"\t{k}")
+                    print(f"\t{'-' * 10}")
+                    for appt in v:
+                        print(f"\t{appt[0]}, {appt[1]}")
+                    print(f"\t{'-' * 42}")
         print('=' * 50)
 
-
     # TODO: Write calendar to csv file
+
+
+
 
 p = PayRoll()
 p.load_database('employees.csv')
