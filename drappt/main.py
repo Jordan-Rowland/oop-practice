@@ -14,7 +14,6 @@ class Administrator:
         """Updates patient notes. Accepts a Patient object, and a note."""
         patient.notes = note
 
-
 class Doctor(Administrator):
     """Initializes with 'hourly=False' by default."""
     def __init__(self, name, salary, hourly=False):
@@ -25,6 +24,9 @@ class Doctor(Administrator):
         """Adds or updates prescriptions on Patient object. Accepts a medicine name and dosage."""
         patient.prescriptions[medicine] = dosage
         return patient.prescriptions
+
+    def __str__(self):
+        return f"Dr. {self.name}"
 
 
 class Receptionist(Administrator):
@@ -56,6 +58,9 @@ class Patient:
         """Requests appointments on Calendar object."""
         print(f'request at {time}')
 
+    def __str__(self):
+        return f"[Patient]{self.name}"
+
     @property
     def notes(self):
         return self._patient_notes
@@ -64,6 +69,7 @@ class Patient:
     def notes(self, note):
         self._patient_notes.append(f'[{str(datetime.now())[:-7]}] - {note}')
 
+    # TODO: Read and write patients to csv
 
 
 class PayRoll(list):
@@ -115,8 +121,88 @@ class PayRoll(list):
         rename('tmp.csv', filename)
 
 
+class Calendar(dict):
+    def __init__(self):
+        self['monday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
+        self['tuesday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
+        self['wednesday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
+        self['thursday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
+        self['friday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
+
+    def show_appt(self, day, time):
+        appt = self.get(day.lower()).get(f"{time}pm")
+        if appt:
+            print(f"{appt[0]} -- {appt[1]}")
+        else:
+            print('No appointment at this time.')
+
+    def book_appt(self, day, time, doctor, patient):
+        if int(time) not in [12, 1, 2, 3, 4]:
+            print('This time is not available. Please select a time between 12pm and 4pm.')
+            return
+        appt = self.get(day.lower()).get(f"{time}pm")
+        appt_details = [doctor, patient]
+        if not appt:
+            self[day.lower()][f"{time}pm"] = [appt_details]
+        else:
+            doctor_names = [details[0].name.lower() for details in appt]
+            if doctor.name.lower() in doctor_names:
+                print(f'Appointment slot with {doctor.name} at {time}pm on {day.title()} already booked.'
+                       '\nPlease choose another time, or delete the existing appointment.')
+                return
+            appt.append(appt_details)
+        print(f"Appointment confirmed at {time}pm on {day.title()} for {patient.name} with "
+              f"{doctor.name}")
+
+    def remove_appt(self, day, time, doctor_name=None):
+        day = day.lower()
+        doctor_name = doctor_name.lower() if doctor_name else None
+        appts = self.get(day).get(f"{time}pm")
+        if not appts:
+            print('No appointments at this time to delete')
+            self.show_calendar()
+            return
+        if not doctor_name:
+            del appts[0]
+            self.show_calendar()
+            return
+        for appointment in appts:
+            if doctor_name in appointment[0].name.lower():
+                appts.remove(appointment)
+                self.show_calendar()
+                return
+        print(f"No appointments on {day.title()} at {time}pm with Dr. {doctor_name.title()}")
+
+    def show_calendar(self):
+        print()
+        for k, v in self.items():
+            print('=' * 50)
+            print(k.title())
+            for k, v in v.items():
+                if v:
+                    print(f"\t{k}")
+                    print(f"\t{'-' * 10}")
+                    for appt in v:
+                        print(f"\t{appt[0]}, {appt[1]}")
+                    print(f"\t{'-' * 42}")
+        print('=' * 50)
+
+    # TODO: Write calendar to csv file
+
+
+
+
 p = PayRoll()
 p.load_database('employees.csv')
-p.calculate_payroll()
+# p.calculate_payroll()
 # p.append(Doctor('Richard Davies', 134000))
 p.write_to_database('employees.csv')
+
+
+c = Calendar()
+c.book_appt('tuesday', 3, p[0], Patient('Julie Kerns'))
+c.book_appt('Friday', 1, p[0], Patient('Jim Fellows'))
+c.book_appt('Friday', 12, p[0], Patient('Pam Fellows'))
+c.book_appt('Friday', 12, p[2], Patient('Karen Freedman'))
+c.show_calendar()
+
