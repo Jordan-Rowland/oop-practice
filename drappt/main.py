@@ -69,7 +69,11 @@ class Patient:
     def notes(self, note):
         self._patient_notes.append(f'[{str(datetime.now())[:-7]}] - {note}')
 
+    # TODO: Create Patient records class?
     # TODO: Read and write patients to csv
+    def write_to_database(self, filename):
+        with open(filename, 'w') as f:
+            pass
 
 
 class PayRoll(list):
@@ -187,9 +191,17 @@ class Calendar(dict):
                     print(f"\t{'-' * 42}")
         print('=' * 50)
 
-    # TODO: Write calendar to csv file
+    # TODO: Write and read calendar to csv file
 
+    def load_database(self, filename):
+        pass
 
+    def write_to_database(self, filename):
+        with open(filename, 'w') as f:
+            f.write('day,time,doctor,patient')
+            for day, times in self.items():
+                for time, details in times.items():
+                    f.write(day, time, details[0], details[1])
 
 
 p = PayRoll()
