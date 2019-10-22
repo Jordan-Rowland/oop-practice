@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from os import rename
 
 class Administrator:
@@ -14,6 +15,10 @@ class Administrator:
         """Updates patient notes. Accepts a Patient object, and a note."""
         patient.notes = note
 
+    def __str__(self):
+        return self.name
+
+
 class Doctor(Administrator):
     """Initializes with 'hourly=False' by default."""
     def __init__(self, name, salary, hourly=False):
@@ -24,9 +29,6 @@ class Doctor(Administrator):
         """Adds or updates prescriptions on Patient object. Accepts a medicine name and dosage."""
         patient.prescriptions[medicine] = dosage
         return patient.prescriptions
-
-    def __str__(self):
-        return f"Dr. {self.name}"
 
 
 class Receptionist(Administrator):
@@ -49,10 +51,10 @@ class Receptionist(Administrator):
 
 class Patient:
     """Has prescriptions and notes attributes for managing patients."""
-    def __init__(self, name):
+    def __init__(self, name, prescriptions={}, _patient_notes=[]):
         self.name = name
-        self.prescriptions = {}
-        self._patient_notes = []
+        self.prescriptions = prescriptions
+        self._patient_notes = _patient_notes
 
     def request_appointment(self, time):
         """Requests appointments on Calendar object."""
@@ -76,8 +78,31 @@ class Patient:
             pass
 
 
+class PatientRecords(list):
+    """Holds list of patients"""
+    def __init__(self, filename):
+        pass
+        # self.load_database(filename)
+
+    def append(self, patient):
+        if not isinstance(patient, Patient):
+            raise TypeError('Only patients can be added')
+        super().append(patient)
+
+    def write_to_database(self, filename):
+        """Writes all patients to database."""
+        with open(filename, 'w') as f:
+            print('name,prescriptions,notes\n')
+            for p in self:
+                f.write(f"{p.name},{json.dumps(p.prescriptions)},"
+                        f"{'<==>'.join(p._patient_notes) if p._patient_notes else None}\n")
+
+
 class PayRoll(list):
     """Extends List class, acts as a singleton and maintains employee roster."""
+
+    def __init__(self, filename):
+        self.load_database(filename)
 
     def calculate_payroll(self):
         """Takes no arguments, runs payroll on contents of self."""
@@ -124,6 +149,15 @@ class PayRoll(list):
                                     f'{employee.hours_accrued}\n')
         rename('tmp.csv', filename)
 
+    def find(self, name):
+        """Finds and returns"""
+        found_user = [x for x in self if name.lower() == x.name.lower()]
+        return found_user
+
+    def __str__(self):
+        names = [f"{'[D]' if isinstance(employee, Doctor) else '[R]'}{employee.name}"
+                 for employee in self]
+        return '\n'.join(names)
 
 class Calendar(dict):
     def __init__(self):
@@ -191,30 +225,43 @@ class Calendar(dict):
                     print(f"\t{'-' * 42}")
         print('=' * 50)
 
-    # TODO: Write and read calendar to csv file
 
     def load_database(self, filename):
-        pass
+        with open(filename, 'r') as f:
+            pass
+    # TODO: Write and read calendar to csv file
 
     def write_to_database(self, filename):
         with open(filename, 'w') as f:
-            f.write('day,time,doctor,patient')
+            f.write('day,time,doctor,patient\n')
             for day, times in self.items():
                 for time, details in times.items():
-                    f.write(day, time, details[0], details[1])
+                    # TODO: Add check for empty lists
+                    if details:
+                        f.write(f"{day},{time},{details[0][0].name},{details[0][1].name}\n")
+        print('Appointments written to database')
 
 
-p = PayRoll()
-p.load_database('employees.csv')
+p_roll = PayRoll('employees.csv')
 # p.calculate_payroll()
 # p.append(Doctor('Richard Davies', 134000))
-p.write_to_database('employees.csv')
+# p.write_to_database('employees.csv')
+p_records = PatientRecords('patients.csv')
 
+
+
+
+p_records.append(Patient('Julie Kerns'))
+p_records.append(Patient('Jim Fellows'))
+p_records.append(Patient('Pam Fellows'))
+p_records.append(Patient('Karen Freedman'))
+
+p_records.write_to_database('patients.csv')
 
 c = Calendar()
-c.book_appt('tuesday', 3, p[0], Patient('Julie Kerns'))
-c.book_appt('Friday', 1, p[0], Patient('Jim Fellows'))
-c.book_appt('Friday', 12, p[0], Patient('Pam Fellows'))
-c.book_appt('Friday', 12, p[2], Patient('Karen Freedman'))
+c.book_appt('tuesday', 3, p_roll[0], p_records[0])
+c.book_appt('Friday', 1,  p_roll[0], p_records[1])
+c.book_appt('Friday', 12, p_roll[0], p_records[2])
+c.book_appt('Friday', 12, p_roll[2], p_records[3])
 c.show_calendar()
 
