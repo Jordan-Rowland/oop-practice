@@ -71,38 +71,48 @@ class Patient:
     def notes(self, note):
         self._patient_notes.append(f'[{str(datetime.now())[:-7]}] - {note}')
 
-    # TODO: Create Patient records class?
-    # TODO: Read and write patients to csv
-    def write_to_database(self, filename):
-        with open(filename, 'w') as f:
-            pass
-
 
 class PatientRecords(list):
     """Holds list of patients"""
     def __init__(self, filename):
-        pass
-        # self.load_database(filename)
+        self.filename = filename
+        self.load_database()
 
     def append(self, patient):
         if not isinstance(patient, Patient):
             raise TypeError('Only patients can be added')
         super().append(patient)
 
-    def write_to_database(self, filename):
+    def write_database(self):
         """Writes all patients to database."""
-        with open(filename, 'w') as f:
-            print('name,prescriptions,notes\n')
+        with open(self.filename, 'w') as f:
+            f.write('name,prescriptions,notes\n')
             for p in self:
                 f.write(f"{p.name},{json.dumps(p.prescriptions)},"
-                        f"{'<==>'.join(p._patient_notes) if p._patient_notes else None}\n")
+                        f"{'<==>'.join(p._patient_notes) if p._patient_notes else []}\n")
+
+    def load_database(self):
+        with open(self.filename, "r") as f:
+            for line in f.readlines()[1:]:
+                name, prescriptions, notes = line.split(',')
+                self.append(Patient(name, prescriptions, notes))
+
+    def find(self, name):
+        found_user = [x for x in self if name.lower() == x.name.lower()]
+        if found_user:
+            return found_user[0]
+
+    def __str__(self):
+        names = [patient.name for patient in self]
+        return '\n'.join(names)
 
 
 class PayRoll(list):
     """Extends List class, acts as a singleton and maintains employee roster."""
 
     def __init__(self, filename):
-        self.load_database(filename)
+        self.filename = filename
+        self.load_database()
 
     def calculate_payroll(self):
         """Takes no arguments, runs payroll on contents of self."""
@@ -123,9 +133,9 @@ class PayRoll(list):
             raise Exception('Employee ID already exists')
         super().append(employee)
 
-    def load_database(self, filename):
+    def load_database(self):
         """Reinitializes employees and payroll from CSV file."""
-        with open(filename, 'r') as f:
+        with open(self.filename, 'r') as f:
             for line in f.readlines()[1:]:
                 _, position, name, salary, hourly, hours_accrued = line.split(',')
                 if position == 'Doctor':
@@ -133,9 +143,9 @@ class PayRoll(list):
                 elif position == 'Receptionist':
                     self.append(Receptionist(name, int(salary), hourly, int(hours_accrued)))
 
-    def write_to_database(self, filename):
+    def write_database(self):
         """Writes all employees to database."""
-        with open(filename, 'r') as original_file:
+        with open(self.filename, 'r') as original_file:
             with open('tmp.csv', "w") as f:
                 f.write('eid,position,name,salary,hourly,hours_accrued\n')
                 if self:
@@ -147,20 +157,23 @@ class PayRoll(list):
                             f.write(f'{employee.eid},Receptionist,{employee.name},'
                                     f'{employee.salary},{employee.hourly},'
                                     f'{employee.hours_accrued}\n')
-        rename('tmp.csv', filename)
+        rename('tmp.csv', self.filename)
 
     def find(self, name):
         """Finds and returns"""
         found_user = [x for x in self if name.lower() == x.name.lower()]
-        return found_user
+        if found_user:
+            return found_user[0]
 
     def __str__(self):
         names = [f"{'[D]' if isinstance(employee, Doctor) else '[R]'}{employee.name}"
                  for employee in self]
         return '\n'.join(names)
 
+
 class Calendar(dict):
-    def __init__(self):
+    def __init__(self, filename):
+        self.filename = filename
         self['monday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
         self['tuesday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
         self['wednesday'] = {'12pm': [], '1pm': [], '2pm': [], '3pm': [], '4pm': []}
@@ -175,22 +188,25 @@ class Calendar(dict):
             print('No appointment at this time.')
 
     def book_appt(self, day, time, doctor, patient):
-        if int(time) not in [12, 1, 2, 3, 4]:
+        time = time if str(time).endswith('pm') else f"{time}pm"
+        if time not in ['12pm', '1pm', '2pm', '3pm', '4pm']:
             print('This time is not available. Please select a time between 12pm and 4pm.')
             return
-        appt = self.get(day.lower()).get(f"{time}pm")
+        appt = self.get(day.lower()).get(time)
         appt_details = [doctor, patient]
         if not appt:
-            self[day.lower()][f"{time}pm"] = [appt_details]
+            self[day.lower()][time] = [appt_details]
+        # TODO: Fix issue where next appt at same time not saving
         else:
-            doctor_names = [details[0].name.lower() for details in appt]
-            if doctor.name.lower() in doctor_names:
-                print(f'Appointment slot with {doctor.name} at {time}pm on {day.title()} already booked.'
-                       '\nPlease choose another time, or delete the existing appointment.')
+            doctor_names = [details[0].lower() for details in appt]
+            if doctor.lower() in doctor_names:
+                print(f'Appointment slot with {doctor.title()} at {time} on {day.title()}' \
+                      'already booked.'
+                      '\nPlease choose another time, or delete the existing appointment.')
                 return
             appt.append(appt_details)
-        print(f"Appointment confirmed at {time}pm on {day.title()} for {patient.name} with "
-              f"{doctor.name}")
+        print(f"Appointment confirmed at {time} on {day.title()} for {patient.title()} with " \
+              f"{doctor.title()}")
 
     def remove_appt(self, day, time, doctor_name=None):
         day = day.lower()
@@ -209,59 +225,49 @@ class Calendar(dict):
                 appts.remove(appointment)
                 self.show_calendar()
                 return
-        print(f"No appointments on {day.title()} at {time}pm with Dr. {doctor_name.title()}")
+        print(f"No appointments on {day.title()} at {time} with Dr. {doctor_name.title()}")
 
     def show_calendar(self):
         print()
-        for k, v in self.items():
+        for day, times in self.items():
             print('=' * 50)
-            print(k.title())
-            for k, v in v.items():
-                if v:
-                    print(f"\t{k}")
+            print(day.title())
+            for time, details in times.items():
+                if details:
+                    print(f"\t{time}")
                     print(f"\t{'-' * 10}")
-                    for appt in v:
-                        print(f"\t{appt[0]}, {appt[1]}")
+                    for appt in details:
+                        print(f"\t{appt[0].title()} - [PATIENT]{appt[1].title()[:-1]}")
                     print(f"\t{'-' * 42}")
         print('=' * 50)
 
+    def load_database(self):
+        with open(self.filename, 'r') as f:
+            for line in f.readlines()[1:]:
+                day, time, doctor, patient = line.split(',')
+                self.book_appt(day, time, doctor, patient)
 
-    def load_database(self, filename):
-        with open(filename, 'r') as f:
-            pass
-    # TODO: Write and read calendar to csv file
-
-    def write_to_database(self, filename):
-        with open(filename, 'w') as f:
+    def write_database(self):
+        with open(self.filename, 'w') as f:
             f.write('day,time,doctor,patient\n')
             for day, times in self.items():
                 for time, details in times.items():
-                    # TODO: Add check for empty lists
                     if details:
-                        f.write(f"{day},{time},{details[0][0].name},{details[0][1].name}\n")
+                        for detail in details:
+                            f.write(f"{day},{time},{detail[0]},{detail[1]}\n")
         print('Appointments written to database')
 
 
-p_roll = PayRoll('employees.csv')
-# p.calculate_payroll()
-# p.append(Doctor('Richard Davies', 134000))
-# p.write_to_database('employees.csv')
-p_records = PatientRecords('patients.csv')
+providers = PayRoll('employees.csv')
+patients = PatientRecords('patients.csv')
+c = Calendar('appointments.csv')
 
 
+# c.book_appt('tuesday', 3, 'jim kelly', 'julie kerns')
+# c.book_appt('Friday', 1,  'jim kelly', 'jim fellows')
+# c.book_appt('Friday', 12, 'jim kelly', 'pam fellows')
+# c.book_appt('Friday', 12, 'richard davies', 'karen freedman')
 
 
-p_records.append(Patient('Julie Kerns'))
-p_records.append(Patient('Jim Fellows'))
-p_records.append(Patient('Pam Fellows'))
-p_records.append(Patient('Karen Freedman'))
-
-p_records.write_to_database('patients.csv')
-
-c = Calendar()
-c.book_appt('tuesday', 3, p_roll[0], p_records[0])
-c.book_appt('Friday', 1,  p_roll[0], p_records[1])
-c.book_appt('Friday', 12, p_roll[0], p_records[2])
-c.book_appt('Friday', 12, p_roll[2], p_records[3])
+c.load_database()
 c.show_calendar()
-
