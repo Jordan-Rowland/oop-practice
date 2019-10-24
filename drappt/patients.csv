@@ -1,5 +1,5 @@
 name,prescriptions,notes
-Julie Kerns,{"buterol": "15mg"},[]
-Jim Fellows,{},[]
-Pam Fellows,{},[]
-Karen Freedman,{},[]
+Julie Kerns,{"buterol": "15mg"},
+Jim Fellows,{},[2019-10-24 15:36:09] - test 1<==>[2019-10-24 15:36:11] - test 2
+Pam Fellows,{"lomerol": "25mg"},[2019-10-24 15:49:47] - ankle hurls
+Karen Freedman,{},
