@@ -88,14 +88,18 @@ class PatientRecords(list):
         with open(self.filename, 'w') as f:
             f.write('name,prescriptions,notes\n')
             for p in self:
-                f.write(f"{p.name},{json.dumps(p.prescriptions)},"
-                        f"{'<==>'.join(p._patient_notes) if p._patient_notes else []}\n")
+                f.write(f"{p.name},{json.dumps(p.prescriptions)}," \
+                        f"{'<==>'.join(p._patient_notes) if p._patient_notes else ''}")
+                f.write("\n")
 
     def load_database(self):
         with open(self.filename, "r") as f:
             for line in f.readlines()[1:]:
+                print(line.split(','))
                 name, prescriptions, notes = line.split(',')
-                self.append(Patient(name, prescriptions, notes))
+                notes = notes[:-1].split('<==>') if notes[:-1] else []
+                print(notes)
+                self.append(Patient(name, json.loads(prescriptions), notes))
 
     def find(self, name):
         found_user = [x for x in self if name.lower() == x.name.lower()]
@@ -196,7 +200,6 @@ class Calendar(dict):
         appt_details = [doctor, patient]
         if not appt:
             self[day.lower()][time] = [appt_details]
-        # TODO: Fix issue where next appt at same time not saving
         else:
             doctor_names = [details[0].lower() for details in appt]
             if doctor.lower() in doctor_names:
