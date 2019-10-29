@@ -57,4 +57,16 @@ class FirstTag:
         return remaining_string[i_end_tag + 1 :]
 
 
+"""
+The state pattern looks very similar to the strategy pattern. The implementation is
+identical, and we could have written the states as first-class functions instead of
+wrapping them in objects.
 
+While the two have identical structures, they solve completely different problems. The
+strategy pattern is used to choose an algorithm at runtime; generally, only one of those
+algorithms is going to be chosen for a particular use case. The state pattern, on the
+other hand, is designed to allow switching between different state dynamically, as some
+process evolves. In code, the primary difference is that the strategy pattern is not
+typically aware of other strategy objects. In the state pattern, either the state or the
+context needs to know which other states that is can switch to.
+"""
