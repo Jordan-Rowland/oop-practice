@@ -48,7 +48,7 @@ i.quantity = 5
 
 
 """
-The key idea is that we can attach multiple observers that fulfill a variety of dutie,
+The key idea is that we can attach multiple observers that fulfill a variety of duties,
 i.e. backup data to a file, database, make API calls, etc. at the same time.
 
 The observer pattern detaches the code being observed from the code doing the observing.
