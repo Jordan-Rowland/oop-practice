@@ -29,6 +29,7 @@ For example, imagine we have the following preexisting class, which takes a stri
 the format YYYY-MM-DD and calculates the person's age on that date.
 """
 
+
 class AgeCalculator:
     def __init__(self, birthday):
         self.year, self.month, self.day = (int(x) for x in birthday.split('-'))
@@ -39,3 +40,58 @@ class AgeCalculator:
         if (month, day) < (self.month, self.day):
             age -= 1
         return age
+
+
+# Adapter for this
+import datetime
+
+
+class DateAdapter:
+    def _str_date(self, date):
+        return date.strftime("%Y-%m-%d")
+
+    def __init__(self, birthday):
+        birthday = self._str_date(birthday)
+        self.calculator = AgeCalculator(birthday)
+
+    def get_age(self, date):
+        date = self._str_date(date)
+        return self.calculator.calculate_age(date)
+
+
+# Another way using inheritance
+class AgeableDate(datetime.date):
+    def split(self, char):
+        return self.year, self.month, self.day
+
+"""
+This class has a single method which takes an argument that we do nothing with. We then
+return a tuple of year, month, day, as the original calculator calls 'birthday.split' and
+returns these. The AgeCalculator class only cares if a 'strip' method exists, and returns
+acceptable values; it doesn't care if we really passed in a string. The following code
+works:
+"""
+
+bd = AgeableDate(1975, 6, 14)
+today = AgeableDate.today()
+print(today)
+a = AgeCalculator(bd)
+print(a.calculate_age(today))
+
+"""
+This works, but it's a bad idea. In this particular instance, such an adapter would be
+hard to maintain. We'd soon forget why we needed to add a 'strip' method to a 'date'
+class. The method name is ambiguous. That can be the nature of adapters, but creating an
+adapter explicitly instead of using inheritance usually clarifies its purpose.
+
+Instead of inheritence, we can sometimes also use monkey-patching to add a method to an
+existing class. It won't work for the datetime object as it doesn't allow attributes to be
+added at runtime. In normal classes, however, we can just add a new method that provides
+the adapted interface that is required by calling code. Alternatively, we could extend or
+monkey-patch the AgeCalculator itself to replace the calculate_age method with something
+more amenable to our needs.
+
+Finally, it is often possible to use a function as an adapter; this obviously doesn't fit
+the actual design of the adapter pattern, but if we recall that functions are essentially
+objects with a __call__ method, it becomes an obvious adapter adaptation.
+"""
