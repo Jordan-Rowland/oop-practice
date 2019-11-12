@@ -91,7 +91,11 @@ class Folder(Component):
         pass
 
     def copy(self, new_path):
-        pass
+        new_folder = get_path(new_path)
+        new_folder.children[f"{self.name} copy"] = self
+        for folder in self.children:
+            self.copy(folder)
+        self.parent = new_folder
 
 
 class File(Component):
@@ -100,7 +104,9 @@ class File(Component):
         self.contents = contents
 
     def copy(self, new_path):
-        pass
+        new_folder = get_path(new_path)
+        new_folder.children[f"{self.name} copy"] = self
+        self.parent = new_folder
 
 
 root = Folder("")
